@@ -1,38 +1,5 @@
 window.addEventListener("load", start);
 
-function start() {
-  console.log("JavaScript is running");
-  document.addEventListener("keydown", keypressHandler);
-  document.addEventListener("keyup", keypressHandler);
-
-  for (let i = 0; i < 10; i++) {
-    const div = document.createElement("div");
-    div.classList.add("asteroid");
-
-    document.querySelector("#gamefield").insertAdjacentElement("beforeend", div);
-    const obj = {
-      x: Math.floor(Math.random() * 750),
-      y: -30,
-      w: 50,
-      h: 50,
-      s: Math.random() * 100 + 50,
-      visual: div,
-    };
-    objects.push(obj);
-  }
-
-  requestAnimationFrame(tick);
-}
-
-function keypressHandler(event) {
-  const value = event.type === "keydown";
-  const key = event.key;
-  if (key === "a" || key === "ArrowLeft") controls.left = value;
-  if (key === "w" || key === "ArrowUp") controls.up = value;
-  if (key === "s" || key === "ArrowDown") controls.down = value;
-  if (key === "d" || key === "ArrowRight") controls.right = value;
-}
-
 const controls = {
   up: false,
   down: false,
@@ -55,6 +22,47 @@ const object = {
 };
 
 let lastTime = 0;
+
+function start() {
+  console.log("JavaScript is running");
+
+  document.addEventListener("keydown", keypressHandler);
+  document.addEventListener("keyup", keypressHandler);
+
+  const gamefield = document.querySelector("#gamefield");
+  if (!gamefield) {
+    console.error("Missing #gamefield element in HTML");
+    return;
+  }
+
+  for (let i = 0; i < 10; i++) {
+    const div = document.createElement("div");
+    div.classList.add("asteroid");
+
+    gamefield.insertAdjacentElement("beforeend", div);
+
+    const obj = {
+      x: Math.floor(Math.random() * 750),
+      y: -30,
+      w: 50,
+      h: 50,
+      s: Math.random() * 100 + 50,
+      visual: div,
+    };
+    objects.push(obj);
+  }
+
+  requestAnimationFrame(tick);
+}
+
+function keypressHandler(event) {
+  const value = event.type === "keydown";
+  const key = event.key.toLowerCase();
+  if (key === "a" || key === "arrowleft") controls.left = value;
+  if (key === "w" || key === "arrowup") controls.up = value;
+  if (key === "s" || key === "arrowdown") controls.down = value;
+  if (key === "d" || key === "arrowright") controls.right = value;
+}
 
 function tick(timestamp) {
   requestAnimationFrame(tick);
@@ -83,21 +91,31 @@ function tick(timestamp) {
   }
 
   for (let i = 0; i < objects.length; i++) {
-    if (Math.sqrt(Math.pow(objects[i].x - object.x, 2) +
-        Math.pow(objects[i].y - object.y, 2)) 
-        < objects[i].w / 2 + object.w / 2) {
+    const dx = objects[i].x - object.x;
+    const dy = objects[i].y - object.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    if (distance < objects[i].w / 2 + object.w / 2) {
       objects[i].s *= 0.95;
       object.hl--;
     }
   }
 
   const visualSpaceShip = document.querySelector(".spaceship");
-  visualSpaceShip.style.translate = `${object.x - object.w / 2}px ${object.y - object.h / 2}px`;
-
-  for (let i = 0; i < objects.length; i++) {
-    objects[i].visual.style.translate = `${objects[i].x - 25}px ${objects[i].y - 25}px`;
+  if (visualSpaceShip) {
+    visualSpaceShip.style.transform = `translate(${object.x - object.w / 2}px, ${object.y - object.h / 2}px)`;
   }
 
-  document.querySelector("#score #number").textContent = String(points).padStart(3, "0");
-  document.querySelector("#healthbar").style.width = `${object.hl}%`;
+  for (let i = 0; i < objects.length; i++) {
+    objects[i].visual.style.transform = `translate(${objects[i].x - 25}px, ${objects[i].y - 25}px)`;
+  }
+
+  const scoreElement = document.querySelector("#score #number");
+  if (scoreElement) {
+    scoreElement.textContent = String(points).padStart(3, "0");
+  }
+
+  const healthbar = document.querySelector("#healthbar");
+  if (healthbar) {
+    healthbar.style.width = `${object.hl}%`;
+  }
 }
